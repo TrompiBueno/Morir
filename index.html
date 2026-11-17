@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>¿Cuándo? · Calculadora de esperanza de vida en España</title>
+<style>
+:root{--bg:#f6f4ef;--card:#fff;--ink:#1c1b22;--mut:#6b6a75;--line:#e4e1d8;--acc:#7c3aed;--acc2:#db2777;--good:#16a34a;--bad:#dc2626;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e0d14;--card:#171622;--ink:#efedf7;--mut:#9b99aa;--line:#2a2838;--good:#4ade80;--bad:#f87171;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e0d14;--card:#171622;--ink:#efedf7;--mut:#9b99aa;--line:#2a2838;--good:#4ade80;--bad:#f87171;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:760px;margin:0 auto;padding:20px 16px 60px}
+header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+h1{font:700 1.5rem Georgia,"Times New Roman",serif;margin:0;letter-spacing:-.01em}
+h1 span{background:linear-gradient(90deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.ib{background:var(--card);border:1px solid var(--line);color:var(--ink);border-radius:10px;padding:6px 10px;cursor:pointer;font-size:.9rem}
+.prog{display:flex;gap:6px;margin-bottom:6px}
+.prog i{flex:1;height:5px;border-radius:5px;background:var(--line)}
+.prog i.d{background:linear-gradient(90deg,var(--acc),var(--acc2))}
+.stl{color:var(--mut);font-size:.85rem;margin-bottom:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px}
+.card h2{font-size:1.05rem;margin:0 0 4px}
+.card h3{font-size:.95rem;margin:0 0 10px}
+.q{margin-bottom:20px}.q:last-child{margin-bottom:0}
+.q>b{display:block;margin-bottom:8px}
+.hint{color:var(--mut);font-size:.83rem;font-weight:400}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{background:transparent;color:var(--ink);border:1.5px solid var(--line);border-radius:999px;padding:8px 14px;cursor:pointer;font:inherit;font-size:.92rem}
+.opt:hover{border-color:var(--acc)}
+.opt.on{background:linear-gradient(90deg,var(--acc),var(--acc2));border-color:transparent;color:#fff}
+input,select{font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:10px;padding:9px 11px;width:100%;max-width:230px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.row label{font-size:.85rem;color:var(--mut);display:block;margin-bottom:3px}
+.nav{display:flex;justify-content:space-between;gap:10px;margin-top:6px}
+.btn{border:0;border-radius:12px;padding:12px 22px;font:600 1rem inherit;cursor:pointer;background:linear-gradient(90deg,var(--acc),var(--acc2));color:#fff}
+.btn.g{background:var(--card);color:var(--ink);border:1px solid var(--line)}
+.err{color:var(--bad);font-size:.9rem;min-height:1.3em;margin:6px 0}
+.hero{text-align:center;padding:26px 14px;background:linear-gradient(135deg,color-mix(in srgb,var(--acc) 14%,var(--card)),color-mix(in srgb,var(--acc2) 12%,var(--card)))}
+.hero small{color:var(--mut);display:block}
+.date{font:700 clamp(1.6rem,6vw,2.5rem)/1.15 Georgia,serif;margin:8px 0;text-transform:capitalize}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.st{background:var(--bg);border-radius:12px;padding:12px}
+.st b{display:block;font-size:1.3rem}.st span{color:var(--mut);font-size:.8rem}
+.bar{display:grid;grid-template-columns:minmax(120px,1.2fr) 2fr 70px;gap:8px;align-items:center;font-size:.88rem;margin:7px 0}
+.bt{height:10px;background:var(--bg);border-radius:6px;overflow:hidden}.bt i{display:block;height:100%;border-radius:6px}
+.bar em{font-style:normal;text-align:right;font-variant-numeric:tabular-nums}
+svg{width:100%;height:auto;display:block}
+.ax{stroke:var(--line)}.tx{fill:var(--mut);font-size:11px}
+details{font-size:.88rem;color:var(--mut)}summary{cursor:pointer;color:var(--ink);font-weight:600}
+.note{font-size:.82rem;color:var(--mut)}
+@media(max-width:520px){.bar{grid-template-columns:1fr 1fr 62px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><h1>¿<span>Cuándo</span>? <small style="font:400 .8rem system-ui;color:var(--mut)">esperanza de vida · España</small></h1><button class="ib" id="th" title="Cambiar tema">◐</button></header>
+<div id="app"></div>
+</div>
+<script>
+// ---------- MODELO ----------
+// Calibración: INE 2024 (esperanza de vida al nacer 81,38 H / 86,53 M) y Sanidad 2024 (a los 65: 19,9 H / 23,8 M).
+// A los 85 años se usan valores aproximados (≈6,1 H / 7,3 M). Mortalidad base tipo Gompertz–Makeham.
+const E={m:[19.9,6.1],f:[23.8,7.3],x:[21.85,6.7]},C0=0.0004,DT=.25;
+function sim(a,b,age,lnH,imp){const H=Math.exp(lnH),n=Math.ceil((122-age)/DT),S=[1];let cum=0,e=0;
+ for(let i=0;i<n;i++){const x=age+i*DT+DT/2,fd=x<=65?1:Math.max(.3,1-(x-65)/60),M=1+(H-1)*fd,mu=(C0+a*Math.exp(b*x)*M)*(imp?Math.exp(-.008*i*DT):1);cum+=mu*DT;const s=Math.exp(-cum);e+=(S[i]+s)/2*DT;S.push(s)}
+ return{S,e}}
+const CAL={};
+function cal(sx){if(CAL[sx])return CAL[sx];const[t65,t85]=E[sx];let best=null;
+ for(let b=.075;b<=.135;b+=.001){let lo=-17,hi=-6;for(let i=0;i<28;i++){const m=(lo+hi)/2;sim(Math.exp(m),b,65,0,0).e>t65?lo=m:hi=m}
+  const a=Math.exp((lo+hi)/2),d=Math.abs(sim(a,b,85,0,0).e-t85);if(!best||d<best.d)best={a,b,d}}
+ return CAL[sx]=best}
+// ---------- PREGUNTAS ----------
+const Y=[["No lo sé",1]];
+const STEPS=[
+{t:"Lo básico",qs:[
+ {id:"mode",k:"o",q:"Nivel de detalle",hint:"ULTRA hace muchas más preguntas concretas y ajusta mucho mejor",o:[["Rápido (≈25 preguntas)",0],["ULTRA (≈60 preguntas, mucho más preciso)",1]]},
+ {id:"sex",k:"o",q:"Sexo (las tablas oficiales distinguen hombre y mujer)",o:[["Hombre","m"],["Mujer","f"],["Prefiero no decirlo","x"]]},
+ {id:"bd",k:"d",q:"Fecha de nacimiento"},
+ {id:"h",k:"n",q:"Altura (cm)",ph:"172"},{id:"w",k:"n",q:"Peso (kg)",ph:"70"}]},
+{t:"Hábitos",qs:[
+ {id:"smk",n:"Tabaco",mod:1,k:"o",q:"Tabaco",o:[["Nunca he fumado",1],["Lo dejé hace más de 10 años",1.15],["Lo dejé hace menos de 10 años",1.4],["Fumo menos de 10 al día",1.8],["Fumo 10–20 al día",2.3],["Fumo más de 20 al día",2.8],["Vapeo habitual",1.3]]},
+ {id:"alc",n:"Alcohol",mod:1,k:"o",q:"Alcohol",o:[["Nada o casi nada",1],["Hasta 1 bebida al día",1],["Unas 2 al día",1.15],["3–4 al día",1.5],["Más de 4 al día",2]]},
+ {id:"act",n:"Actividad física",mod:1,k:"o",q:"Actividad física",o:[["Sedentario",1.35],["Camino un poco (<2 h/sem)",1.15],["Moderada (150 min/sem)",1],["Intensa y regular (>5 h/sem)",.9]]},
+ {id:"diet",n:"Dieta",mod:1,k:"o",q:"Alimentación",o:[["Mucho ultraprocesado/comida rápida",1.2],["Normal, variada",1],["Mediterránea (fruta, verdura, pescado, aceite de oliva)",.88]]},
+ {id:"slp",n:"Sueño",mod:1,k:"o",q:"Horas de sueño habituales",o:[["Menos de 5",1.25],["5–6",1.1],["7–8",1],["Más de 9",1.15]]},
+ {id:"drg",n:"Drogas",mod:1,k:"o",q:"Drogas (aparte de alcohol y tabaco)",o:[["Ninguna",1],["Cannabis ocasional",1.05],["Cannabis frecuente",1.2],["Cocaína/opiáceos/otras duras",2]]}]},
+{t:"Alimentación y movimiento (ULTRA)",u:1,qs:[
+ {id:"stp",n:"Pasos diarios",mod:1,k:"o",q:"Pasos diarios aproximados",o:[["Menos de 3.000",1.4],["3.000–5.000",1.2],["5.000–8.000",1],["8.000–12.000",.88],["Más de 12.000",.85]]},
+ {id:"fz",n:"Fuerza muscular",mod:1,k:"o",q:"Entrenamiento de fuerza",o:[["Nunca",1.1],["1 vez por semana",1],["2 o más por semana",.87]]},
+ {id:"sit",n:"Horas sentado",mod:1,k:"o",q:"Horas sentado al día",o:[["Menos de 5",.95],["5–8",1],["8–10",1.1],["Más de 10",1.25]]},
+ {id:"fru",n:"Fruta y verdura",mod:1,k:"o",q:"Fruta y verdura",o:[["Menos de 2 raciones/día",1.15],["2–4",1],["5 o más",.9]]},
+ {id:"red",n:"Carne roja/procesada",mod:1,k:"o",q:"Carne roja o procesada",o:[["Casi nunca",.95],["Unas veces por semana",1],["Todos los días",1.15]]},
+ {id:"fis",n:"Pescado",mod:1,k:"o",q:"Pescado",o:[["Casi nunca",1.05],["1 vez por semana",1],["2 o más por semana",.94]]},
+ {id:"nut",n:"Frutos secos y legumbres",mod:1,k:"o",q:"Frutos secos y legumbres",o:[["Poco",1.05],["Algunas veces",1],["Casi a diario",.92]]},
+ {id:"sug",n:"Azúcar y ultraprocesados",mod:1,k:"o",q:"Bebidas azucaradas, bollería, ultraprocesados",o:[["Casi nunca",.97],["A veces",1],["A diario",1.12]]},
+ {id:"cof",n:"Café",k:"o",q:"Café al día",o:[["Ninguno",1],["1–4 tazas",.95],["Más de 6",1.05]]},
+ {id:"bng",n:"Atracones de alcohol",mod:1,k:"o",q:"Atracones de alcohol (5+ copas de una vez)",o:[["Nunca",1],["Alguna vez al año",1.03],["Una vez al mes",1.12],["Cada semana",1.3]]},
+ {id:"pas",n:"Humo ajeno",mod:1,k:"o",q:"Exposición habitual al humo de otros",o:[["No",1],["Sí (casa o trabajo)",1.1]]},
+ {id:"ins",n:"Insomnio crónico",mod:1,k:"o",q:"Insomnio crónico",o:[["No",1],["Sí",1.15]]}]},
+{t:"Salud",qs:[
+ {id:"shl",n:"Salud percibida",k:"o",q:"¿Cómo valoras tu salud general?",o:[["Muy buena",.85],["Buena",1],["Regular",1.4],["Mala",2]]},
+ {id:"con",k:"m",q:"Diagnósticos actuales o pasados",hint:"Marca todos los que apliquen",o:[["Infarto, angina o ictus previo",1.9],["Insuficiencia cardíaca",3],["Diabetes tipo 2",1.7],["Diabetes tipo 1",2.5],["Hipertensión mal controlada",1.5],["Hipertensión controlada con tratamiento",1.1],["Colesterol alto sin tratar",1.12],["EPOC / enfermedad pulmonar crónica",2.1],["Enfermedad renal crónica",1.9],["Cáncer activo o tratado hace <5 años",2.5],["Cáncer superado hace >5 años",1.2],["Cirrosis o hepatopatía grave",2.8],["Demencia o Alzheimer",3],["Depresión o ansiedad crónica",1.2],["Apnea del sueño sin tratar",1.3],["Enfermedad autoinmune o VIH",1.25],["Ninguna de estas",1]]},
+ {id:"chk",n:"Revisiones médicas",mod:1,k:"o",q:"Revisiones médicas",o:[["Me reviso con regularidad",.97],["Solo si tengo algo",1],["Casi nunca voy al médico",1.1]]}]},
+{t:"Medidas y analíticas (ULTRA)",u:1,qs:[
+ {id:"bp",n:"Tensión arterial",mod:1,k:"o",q:"Tensión sistólica (la alta) habitual",o:[["Menos de 120",.95],["120–139",1],["140–159",1.3],["160 o más",1.7]]},
+ {id:"ldl",n:"Colesterol LDL",mod:1,k:"o",q:"Colesterol LDL",o:[["Menos de 100",.95],["100–160",1],["Más de 160",1.2]]},
+ {id:"glu",n:"Glucosa en ayunas",mod:1,k:"o",q:"Glucosa en ayunas",o:[["Normal (<100)",1],["Alta (100–125)",1.2],["126 o más",1.6]]},
+ {id:"rhr",n:"Pulso en reposo",mod:1,k:"o",q:"Pulso en reposo",o:[["Menos de 60",.93],["60–80",1],["80–90",1.15],["Más de 90",1.35]]},
+ {id:"wst",n:"Cintura",mod:1,k:"o",q:"Perímetro de cintura",o:[["Normal (H<94 / M<80 cm)",1],["Elevado (H 94–102 / M 80–88)",1.08],["Muy elevado (H>102 / M>88)",1.18]]},
+ {id:"fit",n:"Forma física",mod:1,k:"o",q:"Subir 3 pisos de escaleras",o:[["Sin esfuerzo",.85],["Con algo de esfuerzo",1],["Me cuesta mucho o no puedo",1.7]]},
+ {id:"wgt",n:"Pérdida de peso involuntaria",k:"o",q:"Pérdida de peso sin buscarla (último año)",o:[["No",1],["Sí, más de 5 kg",1.6]]},
+ {id:"hos",n:"Ingresos hospitalarios",k:"o",q:"Ingresos hospitalarios el último año",o:[["Ninguno",1],["Uno",1.25],["Varios",1.7]]},
+ {id:"rx",n:"Medicación diaria",k:"o",q:"Fármacos diarios",o:[["0–2",1],["3–4",1.1],["5 o más",1.3]]},
+ {id:"scr",n:"Cribados y prevención",mod:1,k:"o",q:"Cribados (analíticas, cáncer, vacunas)",o:[["Al día",.95],["Parcial",1],["Ninguno",1.08]]},
+ {id:"mem",n:"Memoria",k:"o",q:"Memoria y claridad mental",o:[["Normal",1],["Despistes frecuentes",1.2],["Problemas importantes",1.6]]},
+ {id:"pain",n:"Dolor crónico",k:"o",q:"Dolor crónico",o:[["No",1],["Sí",1.12]]},
+ {id:"fal",n:"Caídas",k:"o",q:"Caídas el último año",o:[["Ninguna",1],["Una",1.15],["Varias",1.5]]}]},
+{t:"Estilo de vida",qs:[
+ {id:"soc",n:"Vínculos sociales",mod:1,k:"o",q:"Relaciones sociales",o:[["Fuertes (pareja/familia/amigos cercanos)",.9],["Normales",1],["Me siento solo/a o aislado/a",1.4]]},
+ {id:"ses",n:"Nivel socioeconómico",k:"o",q:"Estudios y situación económica",o:[["Altos (universidad, holgada)",.9],["Medios",1],["Bajos o con dificultades económicas",1.2]]},
+ {id:"str",n:"Estrés",mod:1,k:"o",q:"Estrés crónico",o:[["Bajo",.97],["Moderado",1],["Alto y constante",1.2]]},
+ {id:"rsk",n:"Actividades de riesgo",k:"o",q:"Riesgos físicos",o:[["Ninguno especial",1],["Moto habitual, deportes de riesgo o trabajo peligroso",1.2]]},
+ {u:1,id:"mar",n:"Pareja",k:"o",q:"Pareja / estado civil",o:[["Pareja estable",.92],["Soltero/a",1.05],["Viudo/a o divorciado/a reciente",1.15]]},
+ {u:1,id:"pur",n:"Optimismo y propósito",mod:1,k:"o",q:"Optimismo y sentido de propósito",o:[["Alto",.9],["Normal",1],["Bajo",1.12]]},
+ {u:1,id:"job",n:"Tipo de trabajo",k:"o",q:"Trabajo",o:[["Oficina",1],["De pie / físico moderado",.98],["Físico muy duro o turnos de noche",1.12]]},
+ {u:1,id:"pol",n:"Entorno",k:"o",q:"Dónde vives",o:[["Rural, costa o ciudad pequeña",.98],["Ciudad media",1],["Gran ciudad con mucho tráfico",1.07]]}]},
+{t:"Familia",qs:[
+ {id:"fam",k:"f"},
+ {id:"fc",n:"Cáncer en la familia",k:"o",q:"Cáncer en familiares directos (padres/hermanos) antes de los 60",o:[["Ninguno",1],["Uno",1.07],["Dos o más",1.15]]},
+ {id:"fh",n:"Corazón en la familia",k:"o",q:"Infarto/ictus en familiares directos antes de los 60",o:[["Ninguno",1],["Uno",1.1],["Dos o más",1.2]]},
+ {u:1,id:"fd",n:"Diabetes familiar",k:"o",q:"Diabetes en familiares directos",o:[["No",1],["Sí",1.07]]},
+ {u:1,id:"fa",n:"Alzheimer familiar",k:"o",q:"Alzheimer/demencia en padres",o:[["No",1],["Sí",1.06]]},
+ {u:1,id:"fb",n:"Hermanos",k:"o",q:"Hermanos",o:[["Sin problemas de salud graves",1],["Alguno murió antes de los 60 por enfermedad",1.15]]},
+ {u:1,id:"fl",n:"Hipertensión/colesterol hereditario",k:"o",q:"Hipertensión o colesterol alto hereditarios",o:[["No",1],["Sí",1.08]]},
+ {id:"gp",n:"Abuelos longevos",k:"o",q:"Abuelos que superaron los 90 años",o:[["Ninguno",1.02],["Uno",.95],["Dos o más",.88]]}]}
+];
+const QM={};STEPS.forEach(s=>s.qs.forEach(q=>QM[q.id]=q));
+const U=()=>A.mode===1,ST=()=>STEPS.filter(s=>!s.u||U()).map(s=>({...s,qs:s.qs.filter(q=>!q.u||U())})),DMP=()=>U()?.78:.85;
+// ---------- ESTADO ----------
+let step=0,A={fam:{padre:{},madre:{}}},imp=true,err="";
+const app=document.getElementById("app");
+const $f=(v,d=1)=>Number(v).toLocaleString("es-ES",{maximumFractionDigits:d,minimumFractionDigits:d});
+const sel=(q,i)=>q.k=="m"?(A[q.id]||[]).includes(i):A[q.id]===i;
+// ---------- RENDER ----------
+function famHtml(){return `<div class="q"><b>Tus padres <span class="hint">“No lo sé” no modifica el resultado. Las muertes por accidente no cuentan.</span></b>${["padre","madre"].map(k=>{const f=A.fam[k];return `<div class="row" style="margin:8px 0"><div><label>${k=="padre"?"Tu padre":"Tu madre"}</label><select data-fam="${k}" data-f="s"><option value="">No lo sé</option><option value="v"${f.s=="v"?" selected":""}>Vive</option><option value="d"${f.s=="d"?" selected":""}>Falleció</option></select></div>${f.s?`<div><label>${f.s=="v"?"Edad actual":"Edad al fallecer"}</label><input type="number" min="0" max="115" data-fam="${k}" data-f="age" value="${f.age||""}" style="max-width:110px"></div>`:""}${f.s=="d"?`<div><label>Causa</label><select data-fam="${k}" data-f="c"><option value="">Natural/vejez/otra</option><option value="e"${f.c=="e"?" selected":""}>Enfermedad (corazón, cáncer…)</option><option value="a"${f.c=="a"?" selected":""}>Accidente o violencia</option></select></div>`:""}</div>`}).join("")}</div>`}
+function qHtml(q){if(q.k=="f")return famHtml();
+ let h=`<div class="q"><b>${q.q}${q.hint?` <span class="hint">· ${q.hint}</span>`:""}</b>`;
+ if(q.k=="o"||q.k=="m")h+=`<div class="opts">${q.o.map((o,i)=>`<button class="opt${sel(q,i)?" on":""}" data-q="${q.id}" data-i="${i}">${o[0]}</button>`).join("")}${q.k=="o"&&!["sex","mode"].includes(q.id)?`<button class="opt${A[q.id]===-1?" on":""}" data-q="${q.id}" data-i="-1">No lo sé</button>`:""}</div>`;
+ else if(q.k=="d")h+=`<input type="date" id="${q.id}" min="1900-01-01" max="${new Date().toISOString().slice(0,10)}" value="${A[q.id]||""}">`;
+ else h+=`<input type="number" id="${q.id}" placeholder="${q.ph}" value="${A[q.id]||""}" inputmode="decimal">`;
+ return h+"</div>"}
+function render(){window.scrollTo(0,0);
+ const T=ST();if(step>=T.length)return results();
+ const s=T[step];
+ app.innerHTML=`<div class="prog">${T.map((_,i)=>`<i class="${i<=step?"d":""}"></i>`).join("")}</div><div class="stl">Paso ${step+1} de ${T.length} · ${s.t}${step?" · todo es opcional; cuanto más respondas, más preciso":""}</div><div class="card">${s.qs.map(qHtml).join("")}</div><div class="err">${err}</div><div class="nav"><button class="btn g" id="bk"${step?"":" disabled style=\"opacity:.4\""}>← Atrás</button><button class="btn" id="nx">${step==T.length-1?"Ver mi fecha":"Siguiente →"}</button></div>`;
+ err=""}
+// ---------- CÁLCULO ----------
+function age(){return(Date.now()-new Date(A.bd).getTime())/(365.2425*864e5)}
+function bmiHr(a){const b=A.w/Math.pow(A.h/100,2);let h;
+ if(a>=70)h=b<20?1.4:b<22?1.15:b<30?1:b<35?1.05:1.3;
+ else h=b<18.5?1.5:b<25?1:b<30?1.05:b<35?1.25:b<40?1.6:2.1;return{n:`Peso (IMC ${$f(b)})`,hr:h,mod:1}}
+function factors(a){const F=[bmiHr(a)];
+ ST().forEach(s=>s.qs.forEach(q=>{if(q.k=="o"&&q.n&&A[q.id]>=0&&A[q.id]!==undefined){const hr=q.o[A[q.id]][1];if(hr!=1)F.push({n:q.n,hr,mod:q.mod})}
+  if(q.k=="m")(A[q.id]||[]).forEach(i=>{const hr=q.o[i][1];if(hr!=1)F.push({n:q.o[i][0],hr})})}));
+ const ds=[];[["padre",79],["madre",85]].forEach(([k,ex])=>{const f=A.fam[k],ag=+f.age;if(!f.s||!ag||ag<1||ag>115)return;if(f.s=="v"){if(ag>ex)ds.push(ag-ex+1)}else if(f.c!="a")ds.push(ag-ex)});
+ if(ds.length){const d=Math.max(-12,Math.min(12,ds.reduce((x,y)=>x+y)/ds.length)),hr=Math.exp(-.025*d);if(Math.abs(hr-1)>.005)F.push({n:"Longevidad de tus padres",hr})}
+ return F}
+const lnT=F=>Math.max(Math.log(.4),Math.min(Math.log(9),DMP()*F.reduce((s,f)=>s+Math.log(f.hr),0)));
+function pct(S,q){for(let i=1;i<S.length;i++)if(S[i]<=q){return(i-1+(S[i-1]-q)/(S[i-1]-S[i]))*DT}return(S.length-1)*DT}
+function results(){
+ const a=age(),sx=["m","f","x"][A.sex]||"x",{a:ca,b:cb}=cal(sx),F=factors(a),L=lnT(F);
+ const me=sim(ca,cb,a,L,imp),av=sim(ca,cb,a,0,imp),S=me.S;
+ const t50=pct(S,.5),t10=pct(S,.9),t90=pct(S,.1);
+ let mi=0,mx=0;for(let i=0;i<S.length-1;i++){const d=S[i]-S[i+1];if(d>mx){mx=d;mi=i}}
+ const dd=t=>new Date(Date.now()+t*365.2425*864e5),fd=(t,w)=>dd(t).toLocaleDateString("es-ES",w?{weekday:"long",day:"numeric",month:"long",year:"numeric"}:{month:"short",year:"numeric"});
+ const ya=t=>`${Math.floor(t)} años y ${Math.floor((t%1)*12)} meses`;
+ const at=x=>{const i=Math.round((x-a)/DT);return i<0?1:i>=S.length?0:S[i]};
+ // desglose
+ const R=F.map(f=>{const e=sim(ca,cb,a,Math.max(Math.log(.4),Math.min(Math.log(9),L-DMP()*Math.log(f.hr))),imp).e;return{...f,d:e-me.e}}).filter(r=>Math.abs(r.d)>=.05).sort((x,y)=>Math.abs(y.d)-Math.abs(x.d));
+ const mxd=Math.max(...R.map(r=>Math.abs(r.d)),1);
+ const tips=R.filter(r=>r.mod&&r.d>.25).slice(0,3);
+ const ans=(A.sex!==undefined?1:0)+3+ST().slice(1).reduce((n,s)=>n+s.qs.filter(q=>q.k=="o"?A[q.id]!==undefined&&A[q.id]!==-1:q.k=="m"?(A[q.id]||[]).length:0).length,0)+["padre","madre"].filter(k=>A.fam[k].s&&A.fam[k].age).length;
+ const allq=3+1+ST().slice(1).reduce((n,s)=>n+s.qs.filter(q=>q.k!="f").length,0)+2;
+ const prec=Math.round(100*Math.min(ans,allq)/allq);
+ // gráfico
+ const W=640,Hh=230,pl=36,pb=24,x0=a,x1=Math.min(a+S.length*DT,115),X=v=>pl+(v-x0)/(x1-x0)*(W-pl-8),Yy=v=>8+(1-v)*(Hh-pb-8);
+ const path=(s)=>{let p="";for(let i=0;i<s.length;i+=4){const x=a+i*DT;if(x>x1)break;p+=(p?"L":"M")+X(x).toFixed(1)+" "+Yy(s[i]).toFixed(2)}return p};
+ const ticks=[];for(let v=Math.ceil(x0/10)*10;v<=x1;v+=10)ticks.push(v);
+ const svg=`<svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Curva de supervivencia">${[0,.25,.5,.75,1].map(v=>`<line class="ax" x1="${pl}" x2="${W-8}" y1="${Yy(v)}" y2="${Yy(v)}"/><text class="tx" x="${pl-5}" y="${Yy(v)+4}" text-anchor="end">${v*100}%</text>`).join("")}${ticks.map(v=>`<text class="tx" x="${X(v)}" y="${Hh-6}" text-anchor="middle">${v}</text>`).join("")}<path d="${path(av.S)}" fill="none" stroke="var(--mut)" stroke-width="1.8" stroke-dasharray="5 4"/><path d="${path(S)}L${X(x1)} ${Yy(0)}L${X(a)} ${Yy(0)}Z" fill="var(--acc)" opacity=".13"/><path d="${path(S)}" fill="none" stroke="var(--acc)" stroke-width="2.8"/><line x1="${X(a+t50)}" x2="${X(a+t50)}" y1="${Yy(1)}" y2="${Yy(0)}" stroke="var(--acc2)" stroke-width="2" stroke-dasharray="3 3"/><circle cx="${X(a+t50)}" cy="${Yy(.5)}" r="5" fill="var(--acc2)"/><text class="tx" x="${X(a+t50)+7}" y="${Yy(.5)-8}" style="fill:var(--ink)">mediana ${$f(a+t50)} años</text></svg>`;
+ const gp=x=>`${Math.round(at(x)*100)} %`;
+ const days=Math.round(t50*365.2425);
+ app.innerHTML=`<div class="card hero"><small>Fecha estimada en la que habrá un 50 % de probabilidad de que ya no estés</small><div class="date">${fd(t50,1)}</div><div>a los <b>${$f(a+t50)} años</b> · dentro de ${ya(t50)} · unos ${days.toLocaleString("es-ES")} días</div><small style="margin-top:8px">80 % de probabilidad de que ocurra entre <b>${fd(t10)}</b> y <b>${fd(t90)}</b></small></div>
+ <div class="card"><h3>En cifras</h3><div class="grid">
+ <div class="st"><b>${$f(a+me.e)}</b><span>Edad media esperada (años)</span></div>
+ <div class="st"><b>${$f(a+mi*DT)}</b><span>Edad más probable de fallecimiento</span></div>
+ <div class="st"><b style="color:var(--${me.e>=av.e?"good":"bad"})">${me.e>=av.e?"+":"−"}${$f(Math.abs(me.e-av.e))}</b><span>Años vs. la media española de tu edad y sexo</span></div>
+ <div class="st"><b>${gp(80)}</b><span>Prob. de llegar a los 80</span></div>
+ <div class="st"><b>${gp(90)}</b><span>Prob. de llegar a los 90</span></div>
+ <div class="st"><b>${gp(100)}</b><span>Prob. de llegar a los 100</span></div></div>
+ <p class="note" style="margin-bottom:0">Te quedarían aprox. ${Math.round(t50)} veranos y ${Math.round(t50)} Navidades (mediana). Precisión del perfil: ${prec} % de respuestas dadas${U()?" (modo ULTRA: más factores y ajuste más fino del solapamiento entre ellos)":" (prueba el modo ULTRA para afinar mucho más)"}.</p></div>
+ <div class="card"><h3>Probabilidad de seguir vivo/a a cada edad</h3>${svg}<p class="note" style="margin-bottom:0">Línea continua: tu perfil. Discontinua: la media española de tu edad y sexo.</p></div>
+ <div class="card"><h3>Qué suma y qué resta</h3>${R.length?R.map(r=>`<div class="bar"><span>${r.n}</span><div class="bt"><i style="width:${Math.max(4,Math.abs(r.d)/mxd*100)}%;background:var(--${r.d>0?"bad":"good"})"></i></div><em style="color:var(--${r.d>0?"bad":"good"})">${r.d>0?"−":"+"}${$f(Math.abs(r.d))} a.</em></div>`).join(""):"<p class=note>Tu perfil es prácticamente el promedio.</p>"}<p class="note" style="margin-bottom:0">Efecto aproximado de cada factor aislado (los factores se solapan, por eso no suman exactamente).</p></div>
+ ${tips.length?`<div class="card"><h3>Lo que puedes cambiar</h3>${tips.map(t=>`<p style="margin:6px 0">• <b>${t.n}</b>: mejorarlo podría darte hasta <b>+${$f(t.d)} años</b> de media.</p>`).join("")}</div>`:""}
+ <div class="card"><label class="note"><input type="checkbox" id="imp" ${imp?"checked":""} style="width:auto;max-width:none"> Incluir mejoras médicas futuras (~0,8 % menos de mortalidad cada año)</label></div>
+ <div class="card"><details><summary>Cómo se calcula y límites</summary><p><b>Base:</b> esperanza de vida en España en 2024 según el INE (84,01 años al nacer; 81,38 hombres y 86,53 mujeres) y datos del Ministerio de Sanidad (a los 65 años: 19,9 hombres y 23,8 mujeres). Con ellos se ajusta una curva de mortalidad por edad (Gompertz–Makeham) para tu sexo.</p><p><b>Factores:</b> cada respuesta multiplica el riesgo de mortalidad con cocientes de riesgo aproximados y redondeados, inspirados en la literatura epidemiológica (tabaco, IMC, actividad física, alcohol, sueño, dieta mediterránea, aislamiento social, diabetes, enfermedades crónicas, longevidad familiar con herencia ≈ 20–25 %). Se amortigua el solapamiento entre factores y su efecto se atenúa en edades muy avanzadas.</p><p><b>Límites:</b> es un modelo simplificado, no un diagnóstico ni una predicción. No contempla genética concreta, tratamientos nuevos ni accidentes o imprevistos. Incluso con datos perfectos, la fecha concreta de una persona es impredecible: lo fiable es el rango y las probabilidades. Para valorar tu salud real, consulta con tu médico.</p></details></div>
+ <div class="nav"><button class="btn g" id="rs">↺ Rehacer</button><button class="btn g" id="ed">✎ Editar respuestas</button><button class="btn" id="cp">Copiar resultado</button></div>
+ <textarea id="txt" hidden>Mi fecha estimada: ${fd(t50,1)} (a los ${$f(a+t50)} años). Rango 80 %: ${fd(t10)} – ${fd(t90)}.</textarea>`}
+// ---------- EVENTOS ----------
+app.addEventListener("click",e=>{const t=e.target;
+ if(t.classList.contains("opt")){const q=QM[t.dataset.q],i=+t.dataset.i;
+  if(q.k=="m"){let s=A[q.id]||[];const none=q.o.length-1;if(i==none)s=s.includes(i)?[]:[i];else{s=s.filter(x=>x!=none);s=s.includes(i)?s.filter(x=>x!=i):[...s,i]}A[q.id]=s}
+  else A[q.id]=A[q.id]===i?undefined:i;
+  const y=window.scrollY;render();window.scrollTo(0,y);return}
+ if(t.id=="nx"){if(step==0){const a=age();if(A.sex===undefined)err="Elige una opción de sexo.";else if(!A.bd||!(a>=5&&a<=112))err="Introduce una fecha de nacimiento válida.";else if(!(A.h>=100&&A.h<=230))err="Altura entre 100 y 230 cm.";else if(!(A.w>=25&&A.w<=300))err="Peso entre 25 y 300 kg."}
+  if(err){render();return}step++;render()}
+ if(t.id=="bk"&&step){step--;render()}
+ if(t.id=="rs"){A={fam:{padre:{},madre:{}}};step=0;render()}
+ if(t.id=="ed"){step=0;render()}
+ if(t.id=="cp"){const v=document.getElementById("txt").value;try{navigator.clipboard.writeText(v);t.textContent="¡Copiado!"}catch(x){t.textContent="No se pudo copiar"}}});
+app.addEventListener("input",e=>{const t=e.target;if(t.dataset.fam){A.fam[t.dataset.fam][t.dataset.f]=t.value}else if(t.id&&QM[t.id]&&(QM[t.id].k=="n"||QM[t.id].k=="d"))A[t.id]=t.value});
+app.addEventListener("change",e=>{const t=e.target;
+ if(t.dataset.fam&&t.dataset.f=="s"){A.fam[t.dataset.fam]={s:t.value};render()}
+ else if(t.dataset.fam)A.fam[t.dataset.fam][t.dataset.f]=t.value;
+ if(t.id=="imp"){imp=t.checked;const y=window.scrollY;render();window.scrollTo(0,y)}});
+document.getElementById("th").onclick=()=>{const r=document.documentElement,d=r.dataset.theme||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");r.dataset.theme=d=="dark"?"light":"dark"};
+render();
+</script>
+</body>
+</html>
